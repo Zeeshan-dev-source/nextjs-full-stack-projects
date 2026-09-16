@@ -1,6 +1,9 @@
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import DeleteButton from "@/components/DeleteButton";
+import { getBaseUrl } from "@/lib/getBaseUrl";
+
+export const dynamic = "force-dynamic";
 
 async function getProducts() {
   const res = await fetch(`${getBaseUrl()}/api/products`, {

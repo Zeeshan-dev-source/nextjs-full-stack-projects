@@ -1,4 +1,7 @@
 import Link from "next/link";
+import { getBaseUrl } from "@/lib/getBaseUrl";
+
+export const dynamic = "force-dynamic";
 
 async function getOrder(id) {
   const res = await fetch(`${getBaseUrl()}/api/orders/${id}`, {
