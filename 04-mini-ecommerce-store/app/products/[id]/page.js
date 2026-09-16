@@ -3,7 +3,7 @@ import DeleteButton from "@/components/DeleteButton";
 import AddToCartButton from "@/components/AddToCartButton";
 
 async function getProduct(id) {
-  const res = await fetch(`http://localhost:3000/api/products/${id}`, {
+  const res = await fetch(`${getBaseUrl()}/api/products/${id}`, {
     cache: "no-store",
   });
 

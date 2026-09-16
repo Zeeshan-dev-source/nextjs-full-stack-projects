@@ -3,7 +3,7 @@ import Navbar from "@/components/Navbar";
 import DeleteButton from "@/components/DeleteButton";
 
 async function getProducts() {
-  const res = await fetch("http://localhost:3000/api/products", {
+  const res = await fetch(`${getBaseUrl()}/api/products`, {
     cache: "no-store",
   });
 

@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 async function getOrder(id) {
-  const res = await fetch(`http://localhost:3000/api/orders/${id}`, {
+  const res = await fetch(`${getBaseUrl()}/api/orders/${id}`, {
     cache: "no-store",
   });
 
