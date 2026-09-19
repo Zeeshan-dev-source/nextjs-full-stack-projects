@@ -369,11 +369,11 @@ async function handleUpdateTransaction() {
                     {transaction.amount}
                   </p>
                   <button
-  onClick={() => handleDeleteTransaction(transaction.id)}
-  className="ml-4 rounded-lg bg-red-500 px-3 py-1 text-sm text-white hover:bg-red-600 cursor-pointer"
->
-  Delete
-</button>
+                    onClick={() => handleDeleteTransaction(transaction.id)}
+                    className="ml-4 rounded-lg bg-red-500 px-3 py-1 text-sm text-white hover:bg-red-600 cursor-pointer"
+                  >
+                    Delete
+                </button>
 
                   <button
                       onClick={() => handleEditTransaction(transaction)}
