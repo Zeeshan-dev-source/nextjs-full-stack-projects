@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 
-const prisma = new PrismaClient();
 
 // List all members of an organization
 export async function GET(request, { params }) {

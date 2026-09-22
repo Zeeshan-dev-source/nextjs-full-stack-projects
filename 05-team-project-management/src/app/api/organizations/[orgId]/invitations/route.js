@@ -3,7 +3,6 @@ import prisma from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import crypto from "crypto";
 
-const prisma = new PrismaClient();
 
 // List pending invitations for an organization
 export async function GET(request, { params }) {

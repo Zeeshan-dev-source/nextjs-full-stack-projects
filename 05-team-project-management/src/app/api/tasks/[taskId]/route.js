@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 
-const prisma = new PrismaClient();
 
 async function getTaskWithMembership(userId, taskId) {
   const task = await prisma.task.findUnique({

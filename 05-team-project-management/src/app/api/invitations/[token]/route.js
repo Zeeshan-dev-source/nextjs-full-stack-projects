@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 
-const prisma = new PrismaClient();
 
 // Get invitation details (to show on the invite page before accepting)
 export async function GET(request, { params }) {

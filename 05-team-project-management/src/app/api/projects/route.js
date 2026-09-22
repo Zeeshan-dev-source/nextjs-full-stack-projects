@@ -2,8 +2,6 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 
-const prisma = new PrismaClient();
-
 export async function GET() {
   try {
     const currentUser = await getCurrentUser();

@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 
-const prisma = new PrismaClient();
 
 async function getProjectWithMembership(userId, projectId) {
   const project = await prisma.project.findUnique({

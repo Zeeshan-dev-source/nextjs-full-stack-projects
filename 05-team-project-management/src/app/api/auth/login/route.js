@@ -3,7 +3,6 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import prisma from "@/lib/prisma";
 
-const prisma = new PrismaClient();
 
 export async function POST(request) {
   try {
