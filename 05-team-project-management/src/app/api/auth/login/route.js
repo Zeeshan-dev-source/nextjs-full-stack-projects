@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { PrismaClient } from "@/generated/prisma/client";
+import prisma from "@/lib/prisma";
 
 const prisma = new PrismaClient();
 
