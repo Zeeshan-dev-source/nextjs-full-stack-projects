@@ -60,7 +60,7 @@ export async function POST(request) {
   } catch (error) {
     console.error(error);
     return NextResponse.json(
-      { error: "Kuch ghalat ho gaya" },
+      { error: "Something went wrong" },
       { status: 500 }
     );
   }
