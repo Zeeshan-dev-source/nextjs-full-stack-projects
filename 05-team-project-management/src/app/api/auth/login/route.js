@@ -21,7 +21,7 @@ export async function POST(request) {
 
     if (!user) {
       return NextResponse.json(
-        { error: "Email ya password ghalat hai" },
+        { error: "Invalid email or password" },
         { status: 401 }
       );
     }
@@ -30,7 +30,7 @@ export async function POST(request) {
 
     if (!isPasswordValid) {
       return NextResponse.json(
-        { error: "Email ya password ghalat hai" },
+        { error: "Invalid email or password" },
         { status: 401 }
       );
     }

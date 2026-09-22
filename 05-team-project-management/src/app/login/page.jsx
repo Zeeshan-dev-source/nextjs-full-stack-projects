@@ -94,7 +94,7 @@ export default function LoginPage() {
                 <input
                   type="email"
                   name="email"
-                  placeholder="name@company.com"
+                  placeholder="Enter your email"
                   value={formData.email}
                   onChange={handleChange}
                   required
