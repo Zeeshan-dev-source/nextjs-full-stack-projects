@@ -2,22 +2,39 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import Navbar from "../../components/Navbar";
+import StatusBadge from "../../components/StatusBadge";
+import PriorityBadge from "../../components/PriorityBadge";
+import { useToast } from "../../components/ToastContext";
+import {
+  TicketIcon,
+  ChevronLeftIcon,
+  ClockIcon,
+  UserIcon,
+  ShieldCheckIcon,
+  ArrowPathIcon,
+  AlertCircleIcon,
+  MessageSquareIcon,
+} from "../../components/Icons";
 
-export default function AdminTicketDetailPage() {
+export default function UserTicketDetailPage() {
   const { id } = useParams();
   const router = useRouter();
+  const { showToast } = useToast();
 
+  const [currentUser, setCurrentUser] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [ticket, setTicket] = useState(null);
   const [replies, setReplies] = useState([]);
-  const [reply, setReply] = useState("");
-  const [status, setStatus] = useState("");
-  const [message, setMessage] = useState("");
+  const [replyMessage, setReplyMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [accessDenied, setAccessDenied] = useState(false);
 
   useEffect(() => {
-    async function getTicketData() {
+    async function loadTicketAndReplies() {
       const {
         data: { user },
       } = await supabase.auth.getUser();
@@ -27,35 +44,42 @@ export default function AdminTicketDetailPage() {
         return;
       }
 
-      // Check admin role
-      const { data: profile, error: profileError } = await supabase
+      setCurrentUser(user);
+
+      // Check role
+      const { data: profile } = await supabase
         .from("profiles")
-        .select("*")
+        .select("role")
         .eq("id", user.id)
         .single();
 
-      if (profileError || profile.role !== "admin") {
-        router.push("/dashboard");
-        return;
-      }
+      const userIsAdmin = profile?.role === "admin";
+      setIsAdmin(userIsAdmin);
 
-      // Get ticket
+      // Fetch ticket
       const { data: ticketData, error: ticketError } = await supabase
         .from("tickets")
         .select("*")
         .eq("id", id)
         .single();
 
-      if (ticketError) {
-        console.error(ticketError);
+      if (ticketError || !ticketData) {
+        console.error("Error loading ticket:", ticketError);
+        setTicket(null);
+        setLoading(false);
+        return;
+      }
+
+      // Authorization check: User can view if they are the ticket owner OR if they are an admin
+      if (!userIsAdmin && ticketData.user_id !== user.id) {
+        setAccessDenied(true);
         setLoading(false);
         return;
       }
 
       setTicket(ticketData);
-      setStatus(ticketData.status);
 
-      // Get replies
+      // Fetch replies
       const { data: replyData, error: replyError } = await supabase
         .from("ticket_replies")
         .select("*")
@@ -63,236 +87,309 @@ export default function AdminTicketDetailPage() {
         .order("created_at", { ascending: true });
 
       if (replyError) {
-        console.error(replyError);
+        console.error("Error loading replies:", replyError);
       } else {
-        setReplies(replyData);
+        setReplies(replyData || []);
       }
 
       setLoading(false);
     }
 
     if (id) {
-      getTicketData();
+      loadTicketAndReplies();
     }
   }, [id, router]);
 
-  async function handleReply(e) {
+  async function handleSendReply(e) {
     e.preventDefault();
-
-    if (!reply.trim()) {
-      setMessage("Please write a reply.");
-      return;
-    }
+    if (!replyMessage.trim() || sending) return;
 
     setSending(true);
-    setMessage("");
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    try {
+      const { data, error } = await supabase
+        .from("ticket_replies")
+        .insert({
+          ticket_id: Number(id),
+          user_id: currentUser.id,
+          message: replyMessage.trim(),
+        })
+        .select()
+        .single();
 
-    if (!user) {
-      router.push("/login");
-      return;
-    }
+      if (error) {
+        showToast(error.message, "error");
+        setSending(false);
+        return;
+      }
 
-    const { data, error } = await supabase
-      .from("ticket_replies")
-      .insert({
-        ticket_id: Number(id),
-        user_id: user.id,
-        message: reply,
-      })
-      .select()
-      .single();
+      setReplies((prev) => [...prev, data]);
+      setReplyMessage("");
 
-    if (error) {
-      setMessage(error.message);
+      // A customer reply means the ticket needs staff attention again —
+      // reopen it if it was resolved, or otherwise flag it as open.
+      const reopenedStatus = "Open";
+      if ((ticket.status || "").trim() !== reopenedStatus) {
+        const { error: statusError } = await supabase
+          .from("tickets")
+          .update({ status: reopenedStatus })
+          .eq("id", id);
+
+        if (!statusError) {
+          setTicket((prev) => ({ ...prev, status: reopenedStatus }));
+        }
+      }
+
+      showToast("Reply posted successfully.", "success");
+    } catch (err) {
+      showToast("Failed to post reply. Please try again.", "error");
+    } finally {
       setSending(false);
-      return;
     }
-
-    setReplies((currentReplies) => [...currentReplies, data]);
-    setReply("");
-    setMessage("Admin reply sent successfully!");
-    setSending(false);
-  }
-
-  async function handleStatusChange(e) {
-    const newStatus = e.target.value;
-
-    setStatus(newStatus);
-    setMessage("");
-
-    const { error } = await supabase
-      .from("tickets")
-      .update({ status: newStatus })
-      .eq("id", id);
-
-    if (error) {
-      console.error(error);
-      setMessage(error.message);
-      return;
-    }
-
-    setTicket((currentTicket) => ({
-      ...currentTicket,
-      status: newStatus,
-    }));
-
-    setMessage("Ticket status updated successfully!");
   }
 
   if (loading) {
     return (
-      <main className="flex min-h-screen items-center justify-center">
-        <p>Loading...</p>
-      </main>
+      <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
+        <Navbar />
+        <main className="flex-1 flex flex-col items-center justify-center p-8">
+          <ArrowPathIcon className="h-8 w-8 text-indigo-600 animate-spin" />
+          <p className="mt-3 text-sm text-zinc-500 dark:text-zinc-400">
+            Loading ticket #{id}...
+          </p>
+        </main>
+      </div>
+    );
+  }
+
+  if (accessDenied) {
+    return (
+      <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
+        <Navbar />
+        <main className="flex-1 flex flex-col items-center justify-center p-8 text-center">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-red-50 dark:bg-red-950/60 text-red-600 dark:text-red-400 mb-4">
+            <AlertCircleIcon className="h-8 w-8" />
+          </div>
+          <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">
+            Access Restricted
+          </h1>
+          <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400 max-w-md">
+            You do not have permission to view this ticket. This ticket belongs to a different account.
+          </p>
+          <Link
+            href="/dashboard"
+            className="mt-6 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-indigo-500 transition"
+          >
+            Back to My Dashboard
+          </Link>
+        </main>
+      </div>
     );
   }
 
   if (!ticket) {
     return (
-      <main className="flex min-h-screen items-center justify-center">
-        <p>Ticket not found.</p>
-      </main>
+      <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
+        <Navbar />
+        <main className="flex-1 flex flex-col items-center justify-center p-8 text-center">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-zinc-100 dark:bg-zinc-800 text-zinc-500 mb-4">
+            <TicketIcon className="h-8 w-8" />
+          </div>
+          <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">
+            Ticket Not Found
+          </h1>
+          <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
+            The requested ticket does not exist or has been removed.
+          </p>
+          <Link
+            href="/dashboard"
+            className="mt-6 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-indigo-500 transition"
+          >
+            Back to Dashboard
+          </Link>
+        </main>
+      </div>
     );
   }
 
   return (
-    <main className="min-h-screen bg-gray-100 p-8">
-      <div className="mx-auto max-w-3xl">
+    <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 transition-colors">
+      <Navbar />
 
-        <button
-          onClick={() => router.push("/admin")}
-          className="mb-6 rounded bg-gray-700 px-5 py-2 text-white cursor-pointer border-gray-400 hover:bg-gray-800"
-        >
-          ← Back to Admin Dashboard
-        </button>
-
-        {/* Ticket Details */}
-        <div className="rounded-lg bg-white p-8 shadow">
-
-          <div className="flex items-center justify-between">
-            <h1 className="text-3xl font-bold text-gray-600">
-              {ticket.subject}
-            </h1>
-
-            <span className="rounded bg-yellow-100 px-3 py-1 font-medium text-yellow-700">
-              {ticket.status}
-            </span>
-          </div>
-
-          <div className="mt-6">
-            <h2 className="font-semibold text-gray-900">
-              Description
-            </h2>
-
-            <p className="mt-2 text-gray-600">
-              {ticket.description}
-            </p>
-          </div>
-
-          <div className="mt-6 border-t pt-4 text-sm text-gray-500">
-            <p>Ticket ID: {ticket.id}</p>
-
-            <p className="mt-1">
-              User ID: {ticket.user_id}
-            </p>
-
-            <p className="mt-1">
-              Created:{" "}
-              {new Date(ticket.created_at).toLocaleString()}
-            </p>
-          </div>
-
-        </div>
-
-        {/* Status */}
-        <div className="mt-8 rounded-lg bg-white p-8 shadow">
-
-          <h2 className="text-2xl font-bold text-gray-600">
-            Update Status
-          </h2>
-
-          <select
-            value={status}
-            onChange={handleStatusChange}
-            className="mt-4 rounded border p-3 text-gray-900"
+      <main className="flex-1 px-4 py-8 sm:px-6 lg:px-8 max-w-5xl mx-auto w-full">
+        {/* Navigation Breadcrumbs & Admin Switch */}
+        <div className="flex items-center justify-between gap-4 mb-6">
+          <Link
+            href="/dashboard"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-zinc-500 hover:text-indigo-600 dark:text-zinc-400 dark:hover:text-indigo-400 transition"
           >
-            <option value="Open">Open</option>
-            <option value="In Progress">In Progress</option>
-            <option value="Resolved">Resolved</option>
-          </select>
+            <ChevronLeftIcon className="w-4 h-4" />
+            <span>Back to Dashboard</span>
+          </Link>
 
+          {isAdmin && (
+            <Link
+              href={`/admin/tickets/${ticket.id}`}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-950/60 px-3 py-1.5 text-xs font-semibold text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 transition"
+            >
+              <ShieldCheckIcon className="w-3.5 h-3.5" />
+              <span>Open in Admin Console</span>
+            </Link>
+          )}
         </div>
 
-        {/* Replies */}
-        <div className="mt-8 rounded-lg bg-white p-8 shadow">
+        {/* Ticket Header Card */}
+        <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 sm:p-8 shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-zinc-200 dark:border-zinc-800">
+            <div>
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <span className="font-mono text-xs font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 px-2.5 py-1 rounded border border-indigo-200/60 dark:border-indigo-900/60">
+                  Ticket #{ticket.id}
+                </span>
+                <StatusBadge status={ticket.status} size="md" />
+                <PriorityBadge priority={ticket.priority} size="md" />
+              </div>
+              <h1 className="mt-3 text-xl sm:text-2xl font-bold tracking-tight text-zinc-900 dark:text-white">
+                {ticket.subject}
+              </h1>
+            </div>
 
-          <h2 className="text-2xl font-bold text-gray-600">
-            Replies
-          </h2>
+            <div className="text-xs text-zinc-400 dark:text-zinc-500 sm:text-right">
+              <span className="flex items-center sm:justify-end gap-1">
+                <ClockIcon className="w-3.5 h-3.5" />
+                Created {new Date(ticket.created_at).toLocaleDateString()}
+              </span>
+              <p className="mt-0.5">
+                {new Date(ticket.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+              </p>
+            </div>
+          </div>
+
+          {/* Initial Ticket Description */}
+          <div className="pt-6">
+            <div className="flex items-center gap-2.5 mb-3">
+              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300">
+                <UserIcon className="w-4 h-4" />
+              </div>
+              <div>
+                <span className="text-xs font-bold text-zinc-800 dark:text-zinc-200">
+                  {ticket.user_id === currentUser.id ? "You (Ticket Author)" : "Customer"}
+                </span>
+                <span className="text-[11px] text-zinc-400 ml-2">Original Request</span>
+              </div>
+            </div>
+
+            <div className="rounded-xl bg-zinc-50/80 dark:bg-zinc-800/40 border border-zinc-200/80 dark:border-zinc-800 p-5 text-sm text-zinc-800 dark:text-zinc-200 leading-relaxed whitespace-pre-line">
+              {ticket.description}
+            </div>
+          </div>
+        </div>
+
+        {/* Conversation Thread Feed */}
+        <div className="mt-8 space-y-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-bold tracking-tight text-zinc-900 dark:text-white flex items-center gap-2">
+              <MessageSquareIcon className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+              <span>Conversation Thread</span>
+              <span className="text-xs font-normal text-zinc-400">
+                ({replies.length} {replies.length === 1 ? "reply" : "replies"})
+              </span>
+            </h2>
+          </div>
 
           {replies.length === 0 ? (
-            <p className="mt-4 text-gray-500">
-              No replies yet.
-            </p>
+            <div className="rounded-xl border border-dashed border-zinc-300 dark:border-zinc-800 p-8 text-center text-xs text-zinc-500 dark:text-zinc-400">
+              No replies yet. Support staff will respond to your request here.
+            </div>
           ) : (
-            <div className="mt-5 space-y-4">
+            <div className="space-y-4">
+              {replies.map((item) => {
+                const isTicketOwner = item.user_id === ticket.user_id;
+                const isMe = item.user_id === currentUser.id;
 
-              {replies.map((item) => (
-                <div
-                  key={item.id}
-                  className="rounded-lg bg-gray-100 p-4"
-                >
-                  <p className="text-gray-700">
-                    {item.message}
-                  </p>
+                return (
+                  <div
+                    key={item.id}
+                    className={`rounded-2xl border p-5 transition ${
+                      !isTicketOwner
+                        ? "border-indigo-200 dark:border-indigo-900/60 bg-indigo-50/40 dark:bg-indigo-950/20"
+                        : "border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between pb-3 border-b border-zinc-200/60 dark:border-zinc-800/60">
+                      <div className="flex items-center gap-2">
+                        <div
+                          className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold ${
+                            !isTicketOwner
+                              ? "bg-indigo-600 text-white"
+                              : "bg-zinc-200 text-zinc-700 dark:bg-zinc-700 dark:text-zinc-300"
+                          }`}
+                        >
+                          {!isTicketOwner ? <ShieldCheckIcon className="w-4 h-4" /> : <UserIcon className="w-4 h-4" />}
+                        </div>
+                        <div>
+                          <span className="text-xs font-bold text-zinc-900 dark:text-zinc-100">
+                            {!isTicketOwner ? "Support Staff" : isMe ? "You" : "Customer"}
+                          </span>
+                          {!isTicketOwner && (
+                            <span className="ml-2 rounded bg-indigo-100 text-indigo-700 dark:bg-indigo-900/80 dark:text-indigo-300 px-1.5 py-0.2 text-[10px] font-bold uppercase">
+                              Staff
+                            </span>
+                          )}
+                        </div>
+                      </div>
 
-                  <p className="mt-2 text-xs text-gray-400">
-                    {new Date(item.created_at).toLocaleString()}
-                  </p>
-                </div>
-              ))}
+                      <span className="text-[11px] text-zinc-400">
+                        {new Date(item.created_at).toLocaleDateString()} at{" "}
+                        {new Date(item.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                      </span>
+                    </div>
 
+                    <div className="mt-3 text-sm text-zinc-800 dark:text-zinc-200 leading-relaxed whitespace-pre-line">
+                      {item.message}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
 
-          {/* Admin Reply */}
-          <form onSubmit={handleReply} className="mt-6">
+          {/* Reply Box */}
+          <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 shadow-sm">
+            <h3 className="text-sm font-bold text-zinc-900 dark:text-white mb-3">
+              Add a Reply
+            </h3>
 
-            <label className="mb-2 block font-medium text-gray-900">
-              Reply to User
-            </label>
+            <form onSubmit={handleSendReply}>
+              <textarea
+                value={replyMessage}
+                onChange={(e) => setReplyMessage(e.target.value)}
+                placeholder="Type your message to support engineers..."
+                rows={4}
+                required
+                className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50/50 dark:bg-zinc-800/80 p-4 text-sm text-zinc-900 dark:text-white placeholder-zinc-400 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 resize-y leading-relaxed"
+              />
 
-            <textarea
-              value={reply}
-              onChange={(e) => setReply(e.target.value)}
-              placeholder="Write your reply..."
-              rows="5"
-              className="w-full rounded border p-3 bg-white + text-gray-900 + border-gray-300"
-            />
-
-            <button
-              type="submit"
-              disabled={sending}
-              className="mt-4 rounded bg-blue-600 px-6 py-3 text-white disabled:opacity-50"
-            >
-              {sending ? "Sending..." : "Send Admin Reply"}
-            </button>
-
-            {message && (
-              <p className="mt-4 rounded bg-gray-100 p-3 text-gray-700">
-                {message}
-              </p>
-            )}
-
-          </form>
-
+              <div className="mt-3 flex items-center justify-end">
+                <button
+                  type="submit"
+                  disabled={sending || !replyMessage.trim()}
+                  className="flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-xs font-semibold text-white shadow-md shadow-indigo-600/25 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                >
+                  {sending ? (
+                    <>
+                      <ArrowPathIcon className="w-4 h-4 animate-spin" />
+                      <span>Sending Reply...</span>
+                    </>
+                  ) : (
+                    <span>Post Reply</span>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
-
-      </div>
-    </main>
+      </main>
+    </div>
   );
 }
