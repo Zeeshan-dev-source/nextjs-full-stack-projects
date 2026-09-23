@@ -1,12 +1,30 @@
 "use client";
 
 import { useEffect, useState } from "react";
-
+import { PencilIcon, PlusIcon, TagIcon, TrashIcon } from "@/components/icons";
+import {
+  CardHeader,
+  cn,
+  EmptyState,
+  IconButton,
+  PageHeader,
+  Skeleton,
+  Spinner,
+} from "@/components/ui";
 
 type Category = {
   id: number;
   name: string;
 };
+
+const avatarTones = [
+  "bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-300",
+  "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-300",
+  "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-300",
+  "bg-sky-50 text-sky-600 dark:bg-sky-500/10 dark:text-sky-300",
+  "bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-300",
+  "bg-violet-50 text-violet-600 dark:bg-violet-500/10 dark:text-violet-300",
+];
 
 export default function CategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -21,7 +39,7 @@ export default function CategoriesPage() {
         const response = await fetch("/api/categories");
         const data = await response.json();
 
-        setCategories(data);
+        setCategories(Array.isArray(data) ? data : []);
       } catch (error) {
         console.error("Failed to fetch categories:", error);
       } finally {
@@ -33,195 +51,237 @@ export default function CategoriesPage() {
   }, []);
 
   async function handleAddCategory(e: React.FormEvent) {
-  e.preventDefault();
+    e.preventDefault();
 
-  if (!name.trim()) {
-    alert("Please enter a category name");
-    return;
-  }
+    if (!name.trim()) {
+      alert("Please enter a category name");
+      return;
+    }
 
-  setAdding(true);
+    setAdding(true);
 
-  try {
-    const response = await fetch("/api/categories", {
-      method: editingId !== null ? "PUT" : "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(
-        editingId !== null
+    try {
+      const response = await fetch("/api/categories", {
+        method: editingId !== null ? "PUT" : "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(
+          editingId !== null
             ? {
                 id: editingId,
                 name: name.trim(),
-            }
+              }
             : {
                 name: name.trim(),
-            }
+              }
         ),
-    });
+      });
 
-    const data = await response.json();
+      const data = await response.json();
 
-    if (!response.ok) {
-      alert(data.error || "Failed to add category");
-      return;
+      if (!response.ok) {
+        alert(data.error || "Failed to add category");
+        return;
+      }
+
+      setName("");
+      setEditingId(null);
+
+      const refreshResponse = await fetch("/api/categories");
+      const refreshedCategories = await refreshResponse.json();
+
+      setCategories(refreshedCategories);
+    } catch (error) {
+      console.error("Failed to add category:", error);
+      alert("Something went wrong");
+    } finally {
+      setAdding(false);
     }
-
-    setName("");
-
-    const refreshResponse = await fetch("/api/categories");
-    const refreshedCategories = await refreshResponse.json();
-
-    setCategories(refreshedCategories);
-  } catch (error) {
-    console.error("Failed to add category:", error);
-    alert("Something went wrong");
-  } finally {
-    setAdding(false);
   }
-}
 
-function handleEditCategory(category: Category) {
-  setEditingId(category.id);
-  setName(category.name);
+  function handleEditCategory(category: Category) {
+    setEditingId(category.id);
+    setName(category.name);
 
-  setTimeout(() => {
-    document
-      .getElementById("category-form")
-      ?.scrollIntoView({
+    setTimeout(() => {
+      document.getElementById("category-form")?.scrollIntoView({
         behavior: "smooth",
         block: "center",
       });
-  }, 0);
-}
-
-async function handleDeleteCategory(id: number) {
-  const confirmed = window.confirm(
-    "Are you sure you want to delete this category?"
-  );
-
-  if (!confirmed) {
-    return;
+      document.getElementById("category-name")?.focus({ preventScroll: true });
+    }, 0);
   }
 
-  try {
-    const response = await fetch("/api/categories", {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ id }),
-    });
+  async function handleDeleteCategory(id: number) {
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this category?"
+    );
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      alert(data.error || "Failed to delete category");
+    if (!confirmed) {
       return;
     }
 
-    setCategories((currentCategories) =>
-      currentCategories.filter(
-        (category) => category.id !== id
-      )
-    );
-  } catch (error) {
-    console.error("Failed to delete category:", error);
-    alert("Something went wrong");
+    try {
+      const response = await fetch("/api/categories", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ id }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        alert(data.error || "Failed to delete category");
+        return;
+      }
+
+      setCategories((currentCategories) =>
+        currentCategories.filter((category) => category.id !== id)
+      );
+    } catch (error) {
+      console.error("Failed to delete category:", error);
+      alert("Something went wrong");
+    }
   }
-}
+
+  const isEditing = editingId !== null;
 
   return (
-    <main className="min-h-screen bg-gray-100 p-6 dark:bg-gray-950">
-      <div className="mx-auto max-w-6xl">
+    <>
+      <PageHeader
+        title="Categories"
+        description="Manage your expense and income categories."
+      />
+
+      <section
+        id="category-form"
+        className={cn(
+          "card mb-6 scroll-mt-24 overflow-hidden",
+          isEditing && "ring-2 ring-primary/30"
+        )}
+      >
+        <CardHeader
+          title={isEditing ? "Edit Category" : "New Category"}
+          description={
+            isEditing
+              ? "Rename this category."
+              : "Categories group your transactions and budgets."
+          }
+          icon={isEditing ? PencilIcon : PlusIcon}
+        />
+
         <form
-            id="category-form"
-            onSubmit={handleAddCategory}
-            className="mb-8 flex gap-3"
->
-        <input
+          onSubmit={handleAddCategory}
+          className="flex flex-col gap-3 p-5 sm:flex-row sm:p-6"
+        >
+          <label htmlFor="category-name" className="sr-only">
+            Category name
+          </label>
+          <input
+            id="category-name"
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Category name"
-            className="flex-1 rounded-lg border border-gray-400 bg-white px-4 py-2 text-gray-900 outline-none focus:border-blue-600 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+            placeholder="Category name, e.g. Groceries"
+            className="input sm:flex-1"
+          />
+
+          <div className="flex gap-2">
+            {isEditing && (
+              <button
+                type="button"
+                onClick={() => {
+                  setEditingId(null);
+                  setName("");
+                }}
+                className="btn btn-secondary flex-1 sm:flex-none"
+              >
+                Cancel Edit
+              </button>
+            )}
+            <button
+              type="submit"
+              disabled={adding}
+              className="btn btn-primary flex-1 sm:flex-none"
+            >
+              {adding ? <Spinner /> : !isEditing && <PlusIcon className="h-4 w-4" />}
+              {adding
+                ? "Saving..."
+                : isEditing
+                  ? "Update Category"
+                  : "Add Category"}
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <section className="card overflow-hidden">
+        <CardHeader
+          title="All Categories"
+          description={
+            loading
+              ? "Loading…"
+              : `${categories.length} categor${categories.length === 1 ? "y" : "ies"}`
+          }
         />
 
-        <button
-            type="submit"
-            disabled={adding}
-            className="rounded-lg bg-blue-600 px-5 py-2 font-medium text-white hover:bg-blue-700 disabled:opacity-50"
-        >
-             {adding
-                ? "Saving..."
-                : editingId !== null
-                ? "Update Category"
-                : "Add Category"}
-        </button>
-        {editingId !== null && (
-        <button
-            type="button"
-            onClick={() => {
-            setEditingId(null);
-            setName("");
-            }}
-            className="rounded-lg bg-gray-200 px-5 py-2 font-medium text-gray-700 hover:bg-gray-300 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
-        >
-            Cancel Edit
-        </button>
-        )}
-        </form>
-        <h1 className="mb-2 text-3xl font-bold text-gray-900 dark:text-white">
-          Categories
-        </h1>
-
-        <p className="mb-8 text-gray-500 dark:text-gray-400">
-          Manage your expense and income categories.
-        </p>
-
-        <div className="rounded-xl bg-white p-6 shadow dark:bg-gray-900">
-          <h2 className="mb-6 text-xl font-semibold text-gray-900 dark:text-white">
-            All Categories
-          </h2>
-
-          {loading ? (
-            <p className="text-gray-500 dark:text-gray-400">Loading categories...</p>
-          ) : categories.length === 0 ? (
-            <p className="text-gray-500 dark:text-gray-400">No categories yet.</p>
-          ) : (
-            <div className="space-y-3">
-              {categories.map((category) => (
-                <div
-                    key={category.id}
-                    className="flex items-center justify-between rounded-lg border border-gray-200 p-4 dark:border-gray-700"
-                    >
-                    <p className="font-medium text-gray-900 dark:text-white">
-                        {category.name}
-                    </p>
-
-                    <div className="flex gap-2">
-                        <button
-                        type="button"
-                        onClick={() => handleEditCategory(category)}
-                        className="ml-4 rounded-lg bg-blue-500 px-3 py-1 text-sm text-white hover:bg-blue-600">
-                  
-                        Edit
-                        </button>
-
-                    <button
-                        type="button"
-                        onClick={() => handleDeleteCategory(category.id)}
-                        className="ml-4 rounded-lg bg-red-500 px-3 py-1 text-sm text-white hover:bg-red-600"
-                        >
-                        Delete
-                    </button>
-                    </div>
+        {loading ? (
+          <div className="grid gap-3 p-5 sm:grid-cols-2 sm:p-6 xl:grid-cols-3">
+            {Array.from({ length: 6 }, (_, index) => (
+              <Skeleton key={index} className="h-16 rounded-xl" />
+            ))}
+          </div>
+        ) : categories.length === 0 ? (
+          <EmptyState
+            icon={TagIcon}
+            title="No categories yet"
+            description="Create a category above to start organizing transactions."
+          />
+        ) : (
+          <ul className="grid gap-3 p-5 sm:grid-cols-2 sm:p-6 xl:grid-cols-3">
+            {categories.map((category, index) => (
+              <li
+                key={category.id}
+                className={cn(
+                  "flex items-center gap-3 rounded-xl border border-line p-3 pl-4 transition-colors hover:border-line-strong hover:bg-surface-2/50",
+                  editingId === category.id &&
+                    "border-primary/40 bg-primary-soft/60"
+                )}
+              >
+                <span
+                  className={cn(
+                    "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-sm font-semibold uppercase",
+                    avatarTones[index % avatarTones.length]
+                  )}
+                >
+                  {category.name.charAt(0)}
+                </span>
+                <p className="min-w-0 flex-1 truncate text-sm font-medium text-fg">
+                  {category.name}
+                </p>
+                <div className="flex shrink-0 gap-0.5">
+                  <IconButton
+                    label={`Edit ${category.name}`}
+                    onClick={() => handleEditCategory(category)}
+                  >
+                    <PencilIcon className="h-4 w-4" />
+                  </IconButton>
+                  <IconButton
+                    label={`Delete ${category.name}`}
+                    variant="danger"
+                    onClick={() => handleDeleteCategory(category.id)}
+                  >
+                    <TrashIcon className="h-4 w-4" />
+                  </IconButton>
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-    </main>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+    </>
   );
 }
