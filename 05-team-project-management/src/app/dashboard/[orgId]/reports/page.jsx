@@ -43,7 +43,7 @@ export default function ReportsPage() {
   }, [fetchStats]);
 
   return (
-    <div className="flex min-h-screen bg-slate-50">
+    <div className="flex flex-col lg:flex-row min-h-screen bg-slate-50">
       {/* Sidebar */}
       <Sidebar orgId={orgId} />
 
@@ -60,8 +60,8 @@ export default function ReportsPage() {
         />
 
         {/* Sub-nav Tabs */}
-        <div className="border-b border-slate-200/80 bg-white px-6 sm:px-10">
-          <div className="flex gap-6">
+        <div className="border-b border-slate-200/80 bg-white px-4 sm:px-6 lg:px-10">
+          <div className="flex gap-6 overflow-x-auto whitespace-nowrap">
             <Link
               href={`/dashboard/${orgId}`}
               className="border-b-2 border-transparent py-3 text-sm font-medium text-slate-500 hover:text-slate-900 transition"
@@ -83,7 +83,7 @@ export default function ReportsPage() {
           </div>
         </div>
 
-        <main className="flex-1 px-6 py-8 sm:px-10 max-w-6xl w-full">
+        <main className="flex-1 px-4 py-6 sm:px-6 sm:py-8 lg:px-10 max-w-6xl w-full">
           {error && (
             <div className="mb-6 flex items-start gap-3 rounded-xl bg-rose-50 border border-rose-200/80 p-4 text-sm text-rose-700">
               <svg className="w-5 h-5 text-rose-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -98,7 +98,7 @@ export default function ReportsPage() {
 
           {loading ? (
             <div className="space-y-6">
-              <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+              <div className="grid grid-cols-1 min-[400px]:grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
                 {[1, 2, 3, 4].map((i) => (
                   <div key={i} className="h-28 rounded-2xl bg-white border border-slate-200/80 p-5 animate-pulse" />
                 ))}
@@ -109,55 +109,55 @@ export default function ReportsPage() {
           ) : !stats ? null : (
             <div className="space-y-8">
               {/* Executive Summary Cards */}
-              <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+              <div className="grid grid-cols-1 min-[400px]:grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
                 {/* Total Projects */}
-                <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs flex items-center gap-4">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 font-bold">
+                <div className="rounded-2xl border border-slate-200/80 bg-white p-4 sm:p-5 shadow-xs flex items-center gap-3 sm:gap-4 min-w-0">
+                  <div className="flex h-10 w-10 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 font-bold">
                     <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
                     </svg>
                   </div>
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Projects</p>
+                  <div className="min-w-0">
+                    <p className="truncate text-xs font-semibold uppercase tracking-wider text-slate-400">Projects</p>
                     <p className="text-2xl font-bold tracking-tight text-slate-900 mt-0.5">{stats.totalProjects}</p>
                   </div>
                 </div>
 
                 {/* Team Members */}
-                <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs flex items-center gap-4">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-sky-600 font-bold">
+                <div className="rounded-2xl border border-slate-200/80 bg-white p-4 sm:p-5 shadow-xs flex items-center gap-3 sm:gap-4 min-w-0">
+                  <div className="flex h-10 w-10 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-sky-600 font-bold">
                     <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                     </svg>
                   </div>
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Members</p>
+                  <div className="min-w-0">
+                    <p className="truncate text-xs font-semibold uppercase tracking-wider text-slate-400">Members</p>
                     <p className="text-2xl font-bold tracking-tight text-slate-900 mt-0.5">{stats.totalMembers}</p>
                   </div>
                 </div>
 
                 {/* Total Tasks */}
-                <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs flex items-center gap-4">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-600 font-bold">
+                <div className="rounded-2xl border border-slate-200/80 bg-white p-4 sm:p-5 shadow-xs flex items-center gap-3 sm:gap-4 min-w-0">
+                  <div className="flex h-10 w-10 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-600 font-bold">
                     <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
                     </svg>
                   </div>
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Total Tasks</p>
+                  <div className="min-w-0">
+                    <p className="truncate text-xs font-semibold uppercase tracking-wider text-slate-400">Total Tasks</p>
                     <p className="text-2xl font-bold tracking-tight text-slate-900 mt-0.5">{stats.totalTasks}</p>
                   </div>
                 </div>
 
                 {/* Overdue Tasks */}
-                <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs flex items-center gap-4">
-                  <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${stats.overdueTasks > 0 ? "bg-rose-50 text-rose-600" : "bg-emerald-50 text-emerald-600"} font-bold`}>
+                <div className="rounded-2xl border border-slate-200/80 bg-white p-4 sm:p-5 shadow-xs flex items-center gap-3 sm:gap-4 min-w-0">
+                  <div className={`flex h-10 w-10 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-xl ${stats.overdueTasks > 0 ? "bg-rose-50 text-rose-600" : "bg-emerald-50 text-emerald-600"} font-bold`}>
                     <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   </div>
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Overdue</p>
+                  <div className="min-w-0">
+                    <p className="truncate text-xs font-semibold uppercase tracking-wider text-slate-400">Overdue</p>
                     <p className={`text-2xl font-bold tracking-tight mt-0.5 ${stats.overdueTasks > 0 ? "text-rose-600" : "text-slate-900"}`}>
                       {stats.overdueTasks}
                     </p>
@@ -166,13 +166,13 @@ export default function ReportsPage() {
               </div>
 
               {/* Task Status Breakdown Bar */}
-              <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs">
+              <div className="rounded-2xl border border-slate-200/80 bg-white p-4 sm:p-6 shadow-xs">
                 <div className="mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div>
                     <h2 className="text-base font-semibold text-slate-900">Task Status Breakdown</h2>
                     <p className="text-xs text-slate-500">Distribution of all tasks across workflow stages</p>
                   </div>
-                  <div className="flex items-center gap-2 self-start sm:self-center">
+                  <div className="flex flex-wrap items-center gap-2 self-start sm:self-center">
                     <span className="text-xs font-semibold text-slate-400">Overall Progress:</span>
                     <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700 ring-1 ring-inset ring-emerald-200/80">
                       {stats.completionRate}% Complete
@@ -230,13 +230,13 @@ export default function ReportsPage() {
               </div>
 
               {/* Per-Project Progress */}
-              <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs">
-                <div className="mb-6 flex items-center justify-between">
+              <div className="rounded-2xl border border-slate-200/80 bg-white p-4 sm:p-6 shadow-xs">
+                <div className="mb-6 flex items-start sm:items-center justify-between gap-3">
                   <div>
                     <h2 className="text-base font-semibold text-slate-900">Project Progress Overview</h2>
                     <p className="text-xs text-slate-500">Completion rate per active project</p>
                   </div>
-                  <span className="text-xs text-slate-400 font-medium">
+                  <span className="shrink-0 text-xs text-slate-400 font-medium">
                     {stats.projectStats.length} {stats.projectStats.length === 1 ? "project" : "projects"}
                   </span>
                 </div>
@@ -246,18 +246,18 @@ export default function ReportsPage() {
                 ) : (
                   <div className="space-y-5">
                     {stats.projectStats.map((p) => (
-                      <div key={p.id} className="rounded-xl border border-slate-100 bg-slate-50/50 p-4">
-                        <div className="mb-2 flex items-center justify-between">
+                      <div key={p.id} className="rounded-xl border border-slate-100 bg-slate-50/50 p-3 sm:p-4">
+                        <div className="mb-2 flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 sm:gap-3">
                           <Link
                             href={`/dashboard/${orgId}/projects/${p.id}`}
-                            className="text-sm font-semibold text-slate-900 hover:text-indigo-600 transition flex items-center gap-1.5"
+                            className="min-w-0 break-words text-sm font-semibold text-slate-900 hover:text-indigo-600 transition flex items-center gap-1.5"
                           >
                             {p.name}
-                            <svg className="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg className="w-3.5 h-3.5 shrink-0 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
                             </svg>
                           </Link>
-                          <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-3 shrink-0">
                             <span className="text-xs text-slate-500">
                               {p.doneTasks} of {p.totalTasks} tasks done
                             </span>

@@ -62,7 +62,7 @@ export default function AllTasksPage() {
   }, [fetchTasks]);
 
   return (
-    <div className="flex min-h-screen bg-slate-50">
+    <div className="flex flex-col lg:flex-row min-h-screen bg-slate-50">
       {/* Sidebar */}
       <Sidebar />
 
@@ -77,7 +77,7 @@ export default function AllTasksPage() {
           subtitle="All tasks currently assigned to you across all workspaces"
         />
 
-        <main className="flex-1 px-6 py-8 sm:px-10 max-w-5xl w-full">
+        <main className="flex-1 px-4 py-6 sm:px-6 sm:py-8 lg:px-10 max-w-5xl w-full">
           {error && (
             <div className="mb-6 flex items-start gap-3 rounded-xl bg-rose-50 border border-rose-200/80 p-4 text-sm text-rose-700">
               <svg className="w-5 h-5 text-rose-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -123,22 +123,22 @@ export default function AllTasksPage() {
                   <Link
                     key={task.id}
                     href={`/dashboard/${task.project.organizationId}/projects/${task.project.id}`}
-                    className="group flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs transition hover:border-slate-300 hover:shadow-md"
+                    className="group flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 rounded-2xl border border-slate-200/80 bg-white p-4 sm:p-5 shadow-xs transition hover:border-slate-300 hover:shadow-md"
                   >
                     <div className="min-w-0 flex-1">
                       <h2 className="truncate text-base font-semibold text-slate-900 group-hover:text-indigo-600 transition">
                         {task.title}
                       </h2>
-                      <div className="mt-1.5 flex items-center gap-2 text-xs text-slate-400">
-                        <span className="font-medium text-slate-600">
+                      <div className="mt-1.5 flex items-center gap-2 text-xs text-slate-400 min-w-0">
+                        <span className="font-medium text-slate-600 truncate">
                           {task.project.organization.name}
                         </span>
                         <span>•</span>
-                        <span>{task.project.name}</span>
+                        <span className="truncate">{task.project.name}</span>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2.5 shrink-0 self-start sm:self-center">
+                    <div className="flex flex-wrap items-center gap-2.5 shrink-0 self-start sm:self-center">
                       <span
                         className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset ${priority.badge}`}
                       >

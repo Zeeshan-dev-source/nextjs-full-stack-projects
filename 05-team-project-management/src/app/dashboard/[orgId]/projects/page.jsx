@@ -38,7 +38,7 @@ export default function AllProjectsPage() {
   }, [fetchProjects]);
 
   return (
-    <div className="flex min-h-screen bg-slate-50">
+    <div className="flex flex-col lg:flex-row min-h-screen bg-slate-50">
       <Sidebar orgId={orgId} />
 
       <div className="flex-1 flex flex-col min-w-0">
@@ -51,7 +51,7 @@ export default function AllProjectsPage() {
           subtitle="Projects across all your workspaces"
         />
 
-        <main className="flex-1 px-6 py-8 sm:px-10 max-w-6xl w-full">
+        <main className="flex-1 px-4 py-6 sm:px-6 sm:py-8 lg:px-10 max-w-6xl w-full">
           {error && (
             <div className="mb-6 flex items-start gap-3 rounded-xl bg-rose-50 border border-rose-200/80 p-4 text-sm text-rose-700">
               <svg className="w-5 h-5 text-rose-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -84,7 +84,7 @@ export default function AllProjectsPage() {
                   className="group flex flex-col justify-between rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs transition hover:border-slate-300 hover:shadow-md"
                 >
                   <div>
-                    <h2 className="text-base font-semibold text-slate-900 group-hover:text-indigo-600 transition">
+                    <h2 className="break-words text-base font-semibold text-slate-900 group-hover:text-indigo-600 transition">
                       {project.name}
                     </h2>
                     <p className="mt-1 text-xs font-medium text-slate-500">

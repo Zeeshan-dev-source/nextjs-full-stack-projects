@@ -5,9 +5,9 @@ export default function Home() {
     <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-indigo-50/20 text-slate-900 flex flex-col">
       {/* Navigation */}
       <header className="border-b border-slate-200/70 bg-white/70 backdrop-blur-md sticky top-0 z-30">
-        <div className="mx-auto max-w-7xl flex items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 shadow-sm shadow-indigo-200 text-white font-bold">
+        <div className="mx-auto max-w-7xl flex items-center justify-between gap-3 px-4 py-3 sm:px-6 sm:py-4">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 shadow-sm shadow-indigo-200 text-white font-bold">
               <svg
                 className="w-5 h-5 text-white"
                 viewBox="0 0 24 24"
@@ -28,32 +28,32 @@ export default function Home() {
             </span>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
             <Link
               href="/login"
-              className="rounded-xl px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition"
+              className="rounded-xl px-3 sm:px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition"
             >
               Sign In
             </Link>
             <Link
               href="/dashboard"
-              className="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 transition"
+              className="rounded-xl bg-indigo-600 px-3 sm:px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 transition"
             >
-              Go to Workspace
+              <span className="hidden sm:inline">Go to </span>Workspace
             </Link>
           </div>
         </div>
       </header>
 
       {/* Hero Section */}
-      <main className="flex-1 flex flex-col items-center justify-center px-6 py-20 sm:py-28 text-center">
+      <main className="flex-1 flex flex-col items-center justify-center px-4 sm:px-6 py-12 sm:py-20 md:py-28 text-center">
         <div className="inline-flex items-center gap-2 rounded-full border border-indigo-200/80 bg-indigo-50/60 px-3.5 py-1.5 text-xs font-semibold text-indigo-700 mb-6 shadow-xs">
           <span className="flex h-2 w-2 rounded-full bg-indigo-600" />
           Modern Team & Project Management
         </div>
 
-        <h1 className="max-w-3xl text-4xl sm:text-6xl font-extrabold tracking-tight text-slate-900 leading-tight mb-6">
-          Deliver projects faster, <br />
+        <h1 className="max-w-3xl text-3xl min-[400px]:text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-slate-900 leading-tight mb-6">
+          Deliver projects faster, <br className="hidden sm:block" />
           <span className="bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent">
             collaborate with clarity.
           </span>
@@ -64,7 +64,7 @@ export default function Home() {
           role-based permissions, and seamless workflow tracking.
         </p>
 
-        <div className="flex flex-col sm:flex-row items-center gap-4">
+        <div className="w-full sm:w-auto flex flex-col sm:flex-row items-center gap-3 sm:gap-4">
           <Link
             href="/dashboard"
             className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-6 py-3.5 text-base font-semibold text-white shadow-md shadow-indigo-200 hover:bg-indigo-700 transition"
@@ -83,7 +83,7 @@ export default function Home() {
         </div>
 
         {/* Feature Cards Grid */}
-        <div className="mt-20 grid max-w-5xl grid-cols-1 sm:grid-cols-3 gap-6 text-left">
+        <div className="mt-14 sm:mt-20 grid w-full max-w-5xl grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 text-left">
           <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 mb-4 font-bold">
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

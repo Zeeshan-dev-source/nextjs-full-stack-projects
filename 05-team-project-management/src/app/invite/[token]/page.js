@@ -71,7 +71,7 @@ export default function InvitePage() {
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 via-slate-100 to-indigo-50/40 p-4 sm:p-6">
       <div className="w-full max-w-md">
         {/* Brand Header */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-6 sm:mb-8">
           <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-tr from-indigo-600 to-violet-500 shadow-md shadow-indigo-200 text-white font-bold mb-3">
             <svg
               className="w-6 h-6 text-white"
@@ -88,7 +88,7 @@ export default function InvitePage() {
               <rect x="3" y="16" width="7" height="5" rx="1.5" />
             </svg>
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
             Workspace Invitation
           </h1>
           <p className="text-sm text-slate-500 mt-1">
@@ -97,7 +97,7 @@ export default function InvitePage() {
         </div>
 
         {/* Card */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-8 shadow-sm text-center">
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-8 shadow-sm text-center">
           {loading ? (
             <div className="py-8 flex flex-col items-center justify-center gap-3">
               <svg className="w-6 h-6 animate-spin text-indigo-600" fill="none" viewBox="0 0 24 24">
@@ -140,14 +140,14 @@ export default function InvitePage() {
 
               {/* Recipient details box */}
               <div className="mb-5 rounded-xl bg-slate-50 border border-slate-200/70 p-3 text-left space-y-1.5 text-xs">
-                <div className="flex items-center justify-between text-slate-500">
+                <div className="flex items-center justify-between gap-3 text-slate-500">
                   <span>Invitation sent to:</span>
-                  <span className="font-semibold text-slate-800">{invitation.email}</span>
+                  <span className="min-w-0 truncate font-semibold text-slate-800">{invitation.email}</span>
                 </div>
                 {currentUser && (
-                  <div className="flex items-center justify-between text-slate-500 pt-1.5 border-t border-slate-200/60">
+                  <div className="flex items-center justify-between gap-3 text-slate-500 pt-1.5 border-t border-slate-200/60">
                     <span>Signed in as:</span>
-                    <span className="font-semibold text-indigo-600">{currentUser.email}</span>
+                    <span className="min-w-0 truncate font-semibold text-indigo-600">{currentUser.email}</span>
                   </div>
                 )}
               </div>

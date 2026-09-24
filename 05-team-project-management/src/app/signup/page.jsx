@@ -49,7 +49,7 @@ export default function SignupPage() {
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 via-slate-100 to-indigo-50/40 p-4 sm:p-6">
       <div className="w-full max-w-md">
         {/* Brand Header */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-6 sm:mb-8">
           <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-tr from-indigo-600 to-violet-500 shadow-md shadow-indigo-200 text-white font-bold mb-3">
             <svg
               className="w-6 h-6 text-white"
@@ -66,7 +66,7 @@ export default function SignupPage() {
               <rect x="3" y="16" width="7" height="5" rx="1.5" />
             </svg>
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
             Create your TeamFlow account
           </h1>
           <p className="text-sm text-slate-500 mt-1">
@@ -75,7 +75,7 @@ export default function SignupPage() {
         </div>
 
         {/* Signup Card */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-8 shadow-sm">
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-8 shadow-sm">
           {error && (
             <div className="mb-5 flex items-start gap-3 rounded-xl bg-rose-50 border border-rose-200/80 p-3.5 text-xs text-rose-700">
               <svg className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

@@ -106,7 +106,7 @@ export default function MembersPage() {
   };
 
   return (
-    <div className="flex min-h-screen bg-slate-50">
+    <div className="flex flex-col lg:flex-row min-h-screen bg-slate-50">
       {/* Sidebar */}
       <Sidebar orgId={orgId} myRole={myRole} />
 
@@ -136,8 +136,8 @@ export default function MembersPage() {
         />
 
         {/* Sub-nav Tabs */}
-        <div className="border-b border-slate-200/80 bg-white px-6 sm:px-10">
-          <div className="flex gap-6">
+        <div className="border-b border-slate-200/80 bg-white px-4 sm:px-6 lg:px-10">
+          <div className="flex gap-6 overflow-x-auto whitespace-nowrap">
             <Link
               href={`/dashboard/${orgId}`}
               className="border-b-2 border-transparent py-3 text-sm font-medium text-slate-500 hover:text-slate-900 transition"
@@ -159,7 +159,7 @@ export default function MembersPage() {
           </div>
         </div>
 
-        <main className="flex-1 px-6 py-8 sm:px-10 max-w-5xl w-full">
+        <main className="flex-1 px-4 py-6 sm:px-6 sm:py-8 lg:px-10 max-w-5xl w-full">
           {error && (
             <div className="mb-6 flex items-start gap-3 rounded-xl bg-rose-50 border border-rose-200/80 p-4 text-sm text-rose-700">
               <svg className="w-5 h-5 text-rose-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -174,7 +174,7 @@ export default function MembersPage() {
 
           {/* Members Table / List */}
           <div className="rounded-2xl border border-slate-200/80 bg-white shadow-xs overflow-hidden">
-            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+            <div className="px-4 sm:px-6 py-4 border-b border-slate-100 flex items-center justify-between gap-3">
               <h2 className="text-sm font-semibold text-slate-900">
                 Organization Roster
               </h2>
@@ -184,7 +184,7 @@ export default function MembersPage() {
             </div>
 
             {loading ? (
-              <div className="p-6 space-y-4">
+              <div className="p-4 sm:p-6 space-y-4">
                 {[1, 2, 3].map((i) => (
                   <div key={i} className="h-16 rounded-xl bg-slate-100 animate-pulse" />
                 ))}
@@ -204,17 +204,17 @@ export default function MembersPage() {
                   return (
                     <div
                       key={m.id}
-                      className="px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-slate-50/70 transition"
+                      className="px-4 sm:px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 hover:bg-slate-50/70 transition"
                     >
-                      <div className="flex items-center gap-3.5 min-w-0">
+                      <div className="flex items-center gap-3.5 min-w-0 flex-1">
                         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-slate-700 to-indigo-800 text-white font-bold text-xs shadow-xs">
                           {getInitials(m.user.name)}
                         </div>
                         <div className="min-w-0">
-                          <p className="truncate text-sm font-semibold text-slate-900 flex items-center gap-2">
-                            {m.user.name}
+                          <p className="text-sm font-semibold text-slate-900 flex items-center gap-2 min-w-0">
+                            <span className="truncate">{m.user.name}</span>
                             {isMe && (
-                              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
+                              <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
                                 You
                               </span>
                             )}

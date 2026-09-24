@@ -224,7 +224,7 @@ export default function ProjectTasksPage() {
   const canManageTasks = myRole === "OWNER" || myRole === "ADMIN";
 
   return (
-    <div className="flex min-h-screen bg-slate-50">
+    <div className="flex flex-col lg:flex-row min-h-screen bg-slate-50">
       {/* Sidebar */}
       <Sidebar
         orgId={orgId}
@@ -243,7 +243,7 @@ export default function ProjectTasksPage() {
           title={project?.name || "Project Kanban Board"}
           subtitle={`Interactive sprint board with ${tasks.length} ${tasks.length === 1 ? "task" : "tasks"}`}
           actions={
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <Link
                 href={`/dashboard/${orgId}`}
                 className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-sm font-semibold text-slate-700 shadow-xs hover:bg-slate-50 transition"
@@ -268,7 +268,7 @@ export default function ProjectTasksPage() {
           }
         />
 
-        <main className="flex-1 px-6 py-8 sm:px-10 max-w-7xl w-full">
+        <main className="flex-1 px-4 py-6 sm:px-6 sm:py-8 lg:px-10 max-w-7xl w-full">
           {error && (
             <div className="mb-6 flex items-start gap-3 rounded-xl bg-rose-50 border border-rose-200/80 p-4 text-sm text-rose-700">
               <svg className="w-5 h-5 text-rose-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -283,7 +283,7 @@ export default function ProjectTasksPage() {
 
           {/* New Task Form Card */}
           {showForm && (
-            <div className="mb-8 rounded-2xl border border-indigo-100 bg-white p-6 shadow-sm">
+            <div className="mb-6 sm:mb-8 rounded-2xl border border-indigo-100 bg-white p-4 sm:p-6 shadow-sm">
               <h2 className="text-base font-semibold text-slate-900 mb-1">
                 Create new task
               </h2>
@@ -365,20 +365,20 @@ export default function ProjectTasksPage() {
 
           {/* Kanban Columns */}
           {loading ? (
-            <div className="grid gap-6 sm:grid-cols-3">
+            <div className="grid gap-4 lg:gap-6 grid-cols-1 md:grid-cols-3">
               {[1, 2, 3].map((i) => (
                 <div key={i} className="h-96 rounded-2xl border border-slate-200/80 bg-white p-4 animate-pulse" />
               ))}
             </div>
           ) : (
-            <div className="grid gap-6 grid-cols-1 md:grid-cols-3 items-start">
+            <div className="grid gap-4 lg:gap-6 grid-cols-1 md:grid-cols-3 items-start">
               {statusColumns.map((col) => {
                 const columnTasks = tasks.filter((t) => t.status === col.key);
 
                 return (
                   <div
                     key={col.key}
-                    className={`rounded-2xl border ${col.columnBg} p-3 flex flex-col min-h-[520px] transition`}
+                    className={`rounded-2xl border ${col.columnBg} p-3 flex flex-col min-w-0 min-h-[220px] md:min-h-[520px] transition`}
                   >
                     {/* Column Header */}
                     <div className="flex items-center justify-between px-3 py-2.5 mb-3 rounded-xl bg-white shadow-2xs border border-slate-200/70">
@@ -415,7 +415,7 @@ export default function ProjectTasksPage() {
                                     canManageTasks && handleEditTitle(task.id, task.title)
                                   }
                                   title={canManageTasks ? "Click to edit title" : ""}
-                                  className={`text-sm font-semibold text-slate-900 leading-snug ${
+                                  className={`min-w-0 break-words text-sm font-semibold text-slate-900 leading-snug ${
                                     canManageTasks
                                       ? "cursor-pointer hover:text-indigo-600 transition"
                                       : ""
@@ -441,7 +441,7 @@ export default function ProjectTasksPage() {
                               </div>
 
                               {/* Priority & Assignee Meta */}
-                              <div className="flex items-center justify-between pt-2 mb-3 border-t border-slate-100">
+                              <div className="flex flex-wrap items-center justify-between gap-2 pt-2 mb-3 border-t border-slate-100">
                                 <span
                                   className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ring-1 ring-inset ${priority.badge}`}
                                 >
@@ -451,10 +451,10 @@ export default function ProjectTasksPage() {
 
                                 {task.assignee ? (
                                   <div
-                                    className="flex items-center gap-1.5 text-xs text-slate-600"
+                                    className="flex items-center gap-1.5 text-xs text-slate-600 min-w-0"
                                     title={task.assignee.name}
                                   >
-                                    <div className="flex h-5 w-5 items-center justify-center rounded-full bg-slate-100 border border-slate-300 text-[10px] font-bold text-slate-700">
+                                    <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-slate-100 border border-slate-300 text-[10px] font-bold text-slate-700">
                                       {getInitials(task.assignee.name)}
                                     </div>
                                     <span className="truncate max-w-[90px]">

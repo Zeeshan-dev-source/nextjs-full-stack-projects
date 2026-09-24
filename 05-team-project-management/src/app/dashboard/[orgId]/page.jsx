@@ -128,7 +128,7 @@ export default function OrganizationPage() {
   const canCreateProject = myRole === "OWNER" || myRole === "ADMIN";
 
   return (
-    <div className="flex min-h-screen bg-slate-50">
+    <div className="flex flex-col lg:flex-row min-h-screen bg-slate-50">
       {/* Sidebar */}
       <Sidebar
         orgId={orgId}
@@ -147,7 +147,7 @@ export default function OrganizationPage() {
           title={organization?.name || "Organization"}
           subtitle="View and manage projects, invite collaborators, and track sprint tasks"
           actions={
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               {canCreateProject && (
                 <button
                   onClick={() => {
@@ -181,8 +181,8 @@ export default function OrganizationPage() {
         />
 
         {/* Sub-nav Tabs */}
-        <div className="border-b border-slate-200/80 bg-white px-6 sm:px-10">
-          <div className="flex gap-6">
+        <div className="border-b border-slate-200/80 bg-white px-4 sm:px-6 lg:px-10">
+          <div className="flex gap-6 overflow-x-auto whitespace-nowrap">
             <Link
               href={`/dashboard/${orgId}`}
               className="border-b-2 border-indigo-600 py-3 text-sm font-semibold text-indigo-600"
@@ -204,7 +204,7 @@ export default function OrganizationPage() {
           </div>
         </div>
 
-        <main className="flex-1 px-6 py-8 sm:px-10 max-w-6xl w-full">
+        <main className="flex-1 px-4 py-6 sm:px-6 sm:py-8 lg:px-10 max-w-6xl w-full">
           {error && (
             <div className="mb-6 flex items-start gap-3 rounded-xl bg-rose-50 border border-rose-200/80 p-4 text-sm text-rose-700">
               <svg className="w-5 h-5 text-rose-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -219,7 +219,7 @@ export default function OrganizationPage() {
 
           {/* Invite Form Card */}
           {showInviteForm && (
-            <div className="mb-8 rounded-2xl border border-indigo-100 bg-white p-6 shadow-sm">
+            <div className="mb-6 sm:mb-8 rounded-2xl border border-indigo-100 bg-white p-4 sm:p-6 shadow-sm">
               <h2 className="text-base font-semibold text-slate-900 mb-1">
                 Invite team member
               </h2>
@@ -278,7 +278,7 @@ export default function OrganizationPage() {
 
                 {inviteLink && (
                   <div className="mt-4 rounded-xl bg-slate-50 border border-slate-200/80 p-4">
-                    <div className="flex items-center justify-between mb-2">
+                    <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
                       <span className="text-xs font-semibold text-slate-700">
                         Share this invitation link:
                       </span>
@@ -315,7 +315,7 @@ export default function OrganizationPage() {
 
           {/* Create Project Form Card */}
           {showForm && (
-            <div className="mb-8 rounded-2xl border border-indigo-100 bg-white p-6 shadow-sm">
+            <div className="mb-6 sm:mb-8 rounded-2xl border border-indigo-100 bg-white p-4 sm:p-6 shadow-sm">
               <h2 className="text-base font-semibold text-slate-900 mb-1">
                 Create a new project
               </h2>
@@ -415,7 +415,7 @@ export default function OrganizationPage() {
                 >
                   <div>
                     <div className="flex items-start justify-between gap-3 mb-2">
-                      <h2 className="text-base font-semibold text-slate-900 group-hover:text-indigo-600 transition">
+                      <h2 className="min-w-0 break-words text-base font-semibold text-slate-900 group-hover:text-indigo-600 transition">
                         {project.name}
                       </h2>
                       <span className="shrink-0 inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600">
