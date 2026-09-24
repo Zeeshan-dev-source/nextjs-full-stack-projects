@@ -1,436 +1,494 @@
 "use client";
 
-
-import { useEffect, useState } from "react";
-import { supabase } from "../lib/supabase";
+import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
-
-type Task = {
-  id: number;
-  title: string;
-  completed: boolean;
-  priority: string;
-  category: string;
-  due_date: string | null;
-};
+import {
+  CATEGORIES,
+  PRIORITIES,
+  fetchAllTasks,
+  isOverdue,
+  parseDueDate,
+  relativeDue,
+  sortTasks,
+  type Task,
+  type TasksResult,
+} from "../lib/tasks";
+import {
+  CategoryBadge,
+  DueBadge,
+  PRIORITY_STYLES,
+  PriorityBadge,
+} from "../components/TaskBadges";
+import { EmptyState, ErrorState, Skeleton, cardClass } from "../components/UI";
+import {
+  AlertIcon,
+  CalendarIcon,
+  CheckCircleIcon,
+  CheckIcon,
+  ClockIcon,
+  FlagIcon,
+  ListIcon,
+  PlusIcon,
+  TagIcon,
+} from "../components/Icons";
 
 export default function Dashboard() {
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function fetchTasks() {
-      const { data, error } = await supabase
-        .from("tasks")
-        .select("*")
-        .order("created_at", { ascending: false });
+  function applyFetchResult({ data, error }: TasksResult) {
+    setLoading(false);
 
-      if (error) {
-        console.error("Error fetching dashboard tasks:", error);
-        return;
-      }
-
-      setTasks(data || []);
+    if (error) {
+      console.error("Error fetching dashboard tasks:", error);
+      setLoadError("We couldn't load your dashboard. Check your connection and try again.");
+      return;
     }
 
-    fetchTasks();
+    setTasks(data || []);
+  }
+
+  useEffect(() => {
+    fetchAllTasks().then(applyFetchResult);
   }, []);
 
+  function retryFetch() {
+    setLoading(true);
+    setLoadError(null);
+    fetchAllTasks().then(applyFetchResult);
+  }
+
   const totalTasks = tasks.length;
-
-  const completedTasks = tasks.filter(
-    (task) => task.completed
-  ).length;
-
-  const pendingTasks = tasks.filter(
-    (task) => !task.completed
-  ).length;
-
+  const completedTasks = tasks.filter((task) => task.completed).length;
+  const pendingTasks = totalTasks - completedTasks;
+  const overdueTasks = tasks.filter(isOverdue).length;
   const completionPercentage =
-    totalTasks === 0
-      ? 0
-      : Math.round((completedTasks / totalTasks) * 100);
+    totalTasks === 0 ? 0 : Math.round((completedTasks / totalTasks) * 100);
 
-  const highPriorityTasks = tasks.filter(
-    (task) => task.priority === "high"
-  ).length;
+  const priorityBreakdown = PRIORITIES.map((option) => {
+    const matching = tasks.filter((task) => task.priority === option.value);
+    return {
+      ...option,
+      count: matching.length,
+      done: matching.filter((task) => task.completed).length,
+    };
+  });
 
-  const mediumPriorityTasks = tasks.filter(
-    (task) => task.priority === "medium"
-  ).length;
+  const categoryBreakdown = CATEGORIES.map((option) => {
+    const matching = tasks.filter((task) => task.category === option.value);
+    return {
+      ...option,
+      count: matching.length,
+      done: matching.filter((task) => task.completed).length,
+    };
+  });
 
-  const lowPriorityTasks = tasks.filter(
-    (task) => task.priority === "low"
-  ).length;
+  // Pending tasks with a due date, soonest first (overdue ones surface at the top).
+  const upcomingTasks = tasks
+    .filter((task) => task.due_date && !task.completed)
+    .sort(
+      (a, b) =>
+        parseDueDate(a.due_date!).getTime() - parseDueDate(b.due_date!).getTime()
+    )
+    .slice(0, 5);
 
-  const personalTasks = tasks.filter(
-    (task) => task.category === "personal"
-  ).length;
+  const recentTasks = sortTasks(tasks, "newest").slice(0, 5);
 
-  const workTasks = tasks.filter(
-    (task) => task.category === "work"
-  ).length;
+  const stats = [
+    {
+      label: "Total tasks",
+      value: totalTasks,
+      hint: `${pendingTasks} still open`,
+      Icon: ListIcon,
+      tone: "text-blue-600 bg-blue-50 dark:text-blue-400 dark:bg-blue-500/10",
+    },
+    {
+      label: "Completed",
+      value: completedTasks,
+      hint: `${completionPercentage}% of all tasks`,
+      Icon: CheckCircleIcon,
+      tone: "text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-500/10",
+    },
+    {
+      label: "Pending",
+      value: pendingTasks,
+      hint: `${totalTasks === 0 ? 0 : 100 - completionPercentage}% of all tasks`,
+      Icon: ClockIcon,
+      tone: "text-amber-600 bg-amber-50 dark:text-amber-400 dark:bg-amber-500/10",
+    },
+    {
+      label: "Overdue",
+      value: overdueTasks,
+      hint: overdueTasks === 0 ? "You're on track" : "Need attention",
+      Icon: AlertIcon,
+      tone: "text-red-600 bg-red-50 dark:text-red-400 dark:bg-red-500/10",
+    },
+  ];
 
-  const studyTasks = tasks.filter(
-    (task) => task.category === "study"
-  ).length;
-
-  const shoppingTasks = tasks.filter(
-    (task) => task.category === "shopping"
-  ).length;
-
-  const otherTasks = tasks.filter(
-    (task) => task.category === "other"
-  ).length;
-
-const upcomingTasks = tasks
-  .filter((task) => task.due_date)
-  .sort(
-    (a, b) =>
-      new Date(a.due_date!).getTime() -
-      new Date(b.due_date!).getTime()
-  )
-  .slice(0, 5);
-
-  const recentTasks = [...tasks]
-  .sort(
-    (a, b) => b.id - a.id
-  )
-  .slice(0, 5);
-
-return (
-  <main className="min-h-screen bg-slate-50 px-4 py-10">
-    <div className="mx-auto max-w-6xl">
-
-        <div className="mb-6">
+  return (
+    <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
+      {/* Page header */}
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl dark:text-white">
+            Dashboard
+          </h1>
+          <p className="mt-1 text-sm text-slate-500 sm:text-base dark:text-slate-400">
+            Track your task progress and productivity.
+          </p>
+        </div>
         <Link
-            href="/"
-            className="inline-flex rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
+          href="/"
+          className="inline-flex items-center justify-center gap-1.5 self-start rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 sm:self-auto"
         >
-            ← Task Manager
+          <PlusIcon className="h-4 w-4" />
+          Manage tasks
         </Link>
-        </div>
-
-      {/* Header */}
-      <h1 className="text-3xl font-bold text-slate-900">
-        Task Dashboard
-      </h1>
-
-      <p className="mt-2 text-slate-500">
-        Track your task progress and productivity.
-      </p>
-
-      {/* Statistics Cards */}
-      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-
-        {/* Total Tasks */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <p className="text-sm font-medium text-slate-500">
-            Total Tasks
-          </p>
-          <p className="mt-2 text-3xl font-bold text-slate-900">
-            {totalTasks}
-          </p>
-        </div>
-
-        {/* Completed */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <p className="text-sm font-medium text-slate-500">
-            Completed
-          </p>
-          <p className="mt-2 text-3xl font-bold text-emerald-600">
-            {completedTasks}
-          </p>
-        </div>
-
-        {/* Pending */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <p className="text-sm font-medium text-slate-500">
-            Pending
-          </p>
-          <p className="mt-2 text-3xl font-bold text-orange-500">
-            {pendingTasks}
-          </p>
-        </div>
-
-        {/* Completion */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <p className="text-sm font-medium text-slate-500">
-            Completion
-          </p>
-          <p className="mt-2 text-3xl font-bold text-blue-600">
-            {completionPercentage}%
-          </p>
-        </div>
-
       </div>
 
-      {/* Overall Progress */}
-      <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-lg font-semibold text-slate-900">
-              Overall Progress
-            </h2>
-
-            <p className="mt-1 text-sm text-slate-500">
-              {completedTasks} of {totalTasks} tasks completed
-            </p>
+      {loadError ? (
+        <ErrorState message={loadError} onRetry={retryFetch} />
+      ) : (
+        <div className="space-y-6">
+          {/* Stat cards */}
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            {stats.map(({ label, value, hint, Icon, tone }) => (
+              <div key={label} className={`${cardClass} p-4 sm:p-5`}>
+                <div className="flex items-center justify-between gap-2">
+                  <p className="truncate text-xs font-medium text-slate-500 sm:text-sm dark:text-slate-400">
+                    {label}
+                  </p>
+                  <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${tone}`}>
+                    <Icon className="h-4 w-4" />
+                  </span>
+                </div>
+                {loading ? (
+                  <>
+                    <Skeleton className="mt-2 h-8 w-12" />
+                    <Skeleton className="mt-2 h-3 w-20" />
+                  </>
+                ) : (
+                  <>
+                    <p className="mt-1 text-2xl font-bold text-slate-900 tabular-nums sm:text-3xl dark:text-white">
+                      {value}
+                    </p>
+                    <p className="mt-1 truncate text-xs text-slate-500 dark:text-slate-400">
+                      {hint}
+                    </p>
+                  </>
+                )}
+              </div>
+            ))}
           </div>
 
-          <span className="text-lg font-bold text-blue-600">
-            {completionPercentage}%
-          </span>
-        </div>
-
-        <div className="mt-4 h-3 overflow-hidden rounded-full bg-slate-200">
-          <div
-            className="h-full rounded-full bg-blue-600 transition-all duration-500"
-            style={{ width: `${completionPercentage}%` }}
-          />
-        </div>
-      </div>
-
-      {/* Priority Breakdown */}
-      <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-semibold text-slate-900">
-          Priority Breakdown
-        </h2>
-
-        <div className="mt-4 grid gap-4 sm:grid-cols-3">
-
-          {/* High */}
-          <div className="rounded-xl bg-red-50 p-4">
-            <p className="text-sm font-medium text-red-600">
-              High Priority
-            </p>
-
-            <p className="mt-1 text-2xl font-bold text-red-700">
-              {highPriorityTasks}
-            </p>
-          </div>
-
-          {/* Medium */}
-          <div className="rounded-xl bg-yellow-50 p-4">
-            <p className="text-sm font-medium text-yellow-600">
-              Medium Priority
-            </p>
-
-            <p className="mt-1 text-2xl font-bold text-yellow-700">
-              {mediumPriorityTasks}
-            </p>
-          </div>
-
-          {/* Low */}
-          <div className="rounded-xl bg-green-50 p-4">
-            <p className="text-sm font-medium text-green-600">
-              Low Priority
-            </p>
-
-            <p className="mt-1 text-2xl font-bold text-green-700">
-              {lowPriorityTasks}
-            </p>
-          </div>
-
-        </div>
-      </div>
-
-      {/* Category Breakdown */}
-      <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-semibold text-slate-900">
-          Category Breakdown
-        </h2>
-
-        <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-
-          {/* Personal */}
-          <div className="rounded-xl bg-blue-50 p-4">
-            <p className="text-sm font-medium text-blue-600">
-              Personal
-            </p>
-
-            <p className="mt-1 text-2xl font-bold text-blue-700">
-              {personalTasks}
-            </p>
-          </div>
-
-          {/* Work */}
-          <div className="rounded-xl bg-purple-50 p-4">
-            <p className="text-sm font-medium text-purple-600">
-              Work
-            </p>
-
-            <p className="mt-1 text-2xl font-bold text-purple-700">
-              {workTasks}
-            </p>
-          </div>
-
-          {/* Study */}
-          <div className="rounded-xl bg-indigo-50 p-4">
-            <p className="text-sm font-medium text-indigo-600">
-              Study
-            </p>
-
-            <p className="mt-1 text-2xl font-bold text-indigo-700">
-              {studyTasks}
-            </p>
-          </div>
-
-          {/* Shopping */}
-          <div className="rounded-xl bg-orange-50 p-4">
-            <p className="text-sm font-medium text-orange-600">
-              Shopping
-            </p>
-
-            <p className="mt-1 text-2xl font-bold text-orange-700">
-              {shoppingTasks}
-            </p>
-          </div>
-
-          {/* Other */}
-          <div className="rounded-xl bg-slate-100 p-4">
-            <p className="text-sm font-medium text-slate-600">
-              Other
-            </p>
-
-            <p className="mt-1 text-2xl font-bold text-slate-700">
-              {otherTasks}
-            </p>
-          </div>
-
-        </div>
-      </div>
-
-{/* Upcoming Due Dates */}
-<div className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-  <div className="flex items-center justify-between">
-    <div>
-      <h2 className="text-lg font-semibold text-slate-900">
-        Upcoming Due Dates
-      </h2>
-
-      <p className="mt-1 text-sm text-slate-500">
-        Your next upcoming tasks.
-      </p>
-    </div>
-  </div>
-
-  <div className="mt-4 space-y-3">
-    {upcomingTasks.length === 0 ? (
-      <p className="rounded-xl bg-slate-50 p-4 text-sm text-slate-500">
-        No upcoming tasks with due dates.
-      </p>
-    ) : (
-      upcomingTasks.map((task) => (
-        <div
-          key={task.id}
-          className="flex flex-col gap-3 rounded-xl border border-slate-200 p-4 sm:flex-row sm:items-center sm:justify-between"
-        >
-          <div>
-            <h3
-              className={`font-semibold ${
-                task.completed
-                  ? "text-slate-400 line-through"
-                  : "text-slate-900"
-              }`}
-            >
-              {task.title}
-            </h3>
-
-            <div className="mt-2 flex flex-wrap gap-2">
-              <span className="rounded-full bg-purple-100 px-2.5 py-1 text-xs font-semibold text-purple-700">
-                Due: {task.due_date}
-              </span>
-
-              <span className="rounded-full bg-blue-100 px-2.5 py-1 text-xs font-semibold text-blue-700">
-                {task.category}
-              </span>
-
-              <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold capitalize text-slate-600">
-                {task.priority}
-              </span>
-            </div>
-          </div>
-
-          <span
-            className={`text-sm font-semibold ${
-              task.completed
-                ? "text-emerald-600"
-                : "text-orange-500"
-            }`}
-          >
-            {task.completed ? "Completed" : "Pending"}
-          </span>
-        </div>
-      ))
-    )}
-  </div>
-</div>
-
-{/* Recent Tasks */}
-<div className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-  <h2 className="text-lg font-semibold text-slate-900">
-    Recent Tasks
-  </h2>
-
-  <p className="mt-1 text-sm text-slate-500">
-    Your most recently created tasks.
-  </p>
-
-  <div className="mt-4 space-y-3">
-    {recentTasks.length === 0 ? (
-      <p className="rounded-xl bg-slate-50 p-4 text-sm text-slate-500">
-        No tasks available.
-      </p>
-    ) : (
-      recentTasks.map((task) => (
-        <div
-          key={task.id}
-          className="flex flex-col gap-3 rounded-xl border border-slate-200 p-4 sm:flex-row sm:items-center sm:justify-between"
-        >
-          <div>
-            <h3
-              className={`font-semibold ${
-                task.completed
-                  ? "text-slate-400 line-through"
-                  : "text-slate-900"
-              }`}
-            >
-              {task.title}
-            </h3>
-
-            <div className="mt-2 flex flex-wrap gap-2">
-              <span className="rounded-full bg-blue-100 px-2.5 py-1 text-xs font-semibold capitalize text-blue-700">
-                {task.category}
-              </span>
-
-              <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold capitalize text-slate-600">
-                {task.priority}
-              </span>
-
-              {task.due_date && (
-                <span className="rounded-full bg-purple-100 px-2.5 py-1 text-xs font-semibold text-purple-700">
-                  Due: {task.due_date}
-                </span>
+          <div className="grid gap-6 lg:grid-cols-3">
+            {/* Overall progress */}
+            <Card title="Overall progress" Icon={CheckCircleIcon}>
+              {loading ? (
+                <div className="space-y-3">
+                  <Skeleton className="h-10 w-20" />
+                  <Skeleton className="h-2.5 w-full" />
+                  <Skeleton className="h-4 w-40" />
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-4xl font-bold text-slate-900 tabular-nums dark:text-white">
+                      {completionPercentage}%
+                    </span>
+                    <span className="text-sm text-slate-500 dark:text-slate-400">complete</span>
+                  </div>
+                  <div
+                    role="progressbar"
+                    aria-valuenow={completionPercentage}
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-label="Overall completion"
+                    className="mt-4 h-2.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800"
+                  >
+                    <div
+                      className="h-full rounded-full bg-blue-600 transition-all duration-700 dark:bg-blue-500"
+                      style={{ width: `${completionPercentage}%` }}
+                    />
+                  </div>
+                  <p className="mt-3 text-sm text-slate-600 dark:text-slate-400">
+                    {completedTasks} of {totalTasks} tasks completed
+                  </p>
+                  <dl className="mt-5 grid grid-cols-2 gap-3 border-t border-slate-100 pt-4 dark:border-slate-800">
+                    <div>
+                      <dt className="text-xs text-slate-500 dark:text-slate-400">Completed</dt>
+                      <dd className="text-lg font-semibold text-slate-900 tabular-nums dark:text-white">{completedTasks}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-xs text-slate-500 dark:text-slate-400">Remaining</dt>
+                      <dd className="text-lg font-semibold text-slate-900 tabular-nums dark:text-white">{pendingTasks}</dd>
+                    </div>
+                  </dl>
+                </>
               )}
-            </div>
+            </Card>
+
+            {/* Priority breakdown */}
+            <Card title="Priority breakdown" Icon={FlagIcon}>
+              <BreakdownList
+                loading={loading}
+                total={totalTasks}
+                rows={priorityBreakdown.map((row) => ({
+                  ...row,
+                  marker: PRIORITY_STYLES[row.value].dot,
+                  bar: PRIORITY_STYLES[row.value].dot,
+                }))}
+              />
+            </Card>
+
+            {/* Category breakdown */}
+            <Card title="Category breakdown" Icon={TagIcon}>
+              <BreakdownList
+                loading={loading}
+                total={totalTasks}
+                rows={categoryBreakdown.map((row) => ({
+                  ...row,
+                  bar: "bg-blue-600 dark:bg-blue-500",
+                }))}
+              />
+            </Card>
           </div>
 
-          <span
-            className={`text-sm font-semibold ${
-              task.completed
-                ? "text-emerald-600"
-                : "text-orange-500"
-            }`}
-          >
-            {task.completed ? "Completed" : "Pending"}
-          </span>
-        </div>
-      ))
-    )}
-  </div>
-</div>
+          <div className="grid gap-6 lg:grid-cols-2">
+            {/* Upcoming due dates */}
+            <Card
+              title="Upcoming due dates"
+              subtitle="Open tasks with a due date, soonest first."
+              Icon={CalendarIcon}
+            >
+              {loading ? (
+                <ListSkeleton />
+              ) : upcomingTasks.length === 0 ? (
+                <EmptyState
+                  compact
+                  icon={<CalendarIcon className="h-5 w-5" />}
+                  title="No upcoming due dates"
+                  description={
+                    totalTasks === 0
+                      ? "Create a task and give it a due date to see it here."
+                      : "None of your open tasks have a due date. Edit a task to add one."
+                  }
+                  action={<GoToTasks label={totalTasks === 0 ? "Create a task" : "Go to tasks"} />}
+                />
+              ) : (
+                <ul className="divide-y divide-slate-100 dark:divide-slate-800">
+                  {upcomingTasks.map((task) => {
+                    const overdue = isOverdue(task);
+                    return (
+                      <li key={task.id} className="flex items-start gap-3 py-3 first:pt-0 last:pb-0">
+                        <span
+                          className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
+                            overdue
+                              ? "bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400"
+                              : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400"
+                          }`}
+                        >
+                          {overdue ? <AlertIcon className="h-4 w-4" /> : <CalendarIcon className="h-4 w-4" />}
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium break-words text-slate-900 dark:text-slate-100">
+                            {task.title}
+                          </p>
+                          <p
+                            className={`mt-0.5 text-xs ${
+                              overdue ? "font-medium text-red-600 dark:text-red-400" : "text-slate-500 dark:text-slate-400"
+                            }`}
+                          >
+                            {relativeDue(task.due_date!)}
+                          </p>
+                          <div className="mt-2 flex flex-wrap gap-1.5">
+                            <DueBadge task={task} />
+                            <PriorityBadge priority={task.priority} />
+                            <CategoryBadge category={task.category} />
+                          </div>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </Card>
 
+            {/* Recent tasks */}
+            <Card
+              title="Recent tasks"
+              subtitle="Your most recently created tasks."
+              Icon={ClockIcon}
+            >
+              {loading ? (
+                <ListSkeleton />
+              ) : recentTasks.length === 0 ? (
+                <EmptyState
+                  compact
+                  icon={<ListIcon className="h-5 w-5" />}
+                  title="No recent tasks"
+                  description="Tasks you create will show up here. Add your first one to get started."
+                  action={<GoToTasks label="Create a task" />}
+                />
+              ) : (
+                <ul className="divide-y divide-slate-100 dark:divide-slate-800">
+                  {recentTasks.map((task) => (
+                    <li key={task.id} className="flex items-start gap-3 py-3 first:pt-0 last:pb-0">
+                      <span
+                        className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 ${
+                          task.completed
+                            ? "border-emerald-500 bg-emerald-500 text-white"
+                            : "border-slate-300 dark:border-slate-600"
+                        }`}
+                        aria-label={task.completed ? "Completed" : "Pending"}
+                        role="img"
+                      >
+                        {task.completed && <CheckIcon className="h-3 w-3" strokeWidth={3.5} />}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-start justify-between gap-2">
+                          <p
+                            className={`text-sm font-medium break-words ${
+                              task.completed
+                                ? "text-slate-400 line-through dark:text-slate-500"
+                                : "text-slate-900 dark:text-slate-100"
+                            }`}
+                          >
+                            {task.title}
+                          </p>
+                          <span
+                            className={`shrink-0 text-xs font-medium ${
+                              task.completed
+                                ? "text-emerald-600 dark:text-emerald-400"
+                                : "text-amber-600 dark:text-amber-400"
+                            }`}
+                          >
+                            {task.completed ? "Completed" : "Pending"}
+                          </span>
+                        </div>
+                        <div className={`mt-2 flex flex-wrap gap-1.5 ${task.completed ? "opacity-70" : ""}`}>
+                          <PriorityBadge priority={task.priority} />
+                          <CategoryBadge category={task.category} />
+                          <DueBadge task={task} />
+                        </div>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Card>
+          </div>
+        </div>
+      )}
+    </main>
+  );
+}
+
+function Card({
+  title,
+  subtitle,
+  Icon,
+  children,
+}: {
+  title: string;
+  subtitle?: string;
+  Icon: typeof ListIcon;
+  children: ReactNode;
+}) {
+  return (
+    <section className={`${cardClass} min-w-0 p-5 sm:p-6`}>
+      <div className="mb-5 flex items-start gap-3">
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+          <Icon className="h-4 w-4" />
+        </span>
+        <div className="min-w-0">
+          <h2 className="text-base font-semibold text-slate-900 dark:text-white">{title}</h2>
+          {subtitle && (
+            <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">{subtitle}</p>
+          )}
+        </div>
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function BreakdownList({
+  rows,
+  total,
+  loading,
+}: {
+  rows: { value: string; label: string; count: number; done: number; bar: string; marker?: string }[];
+  total: number;
+  loading: boolean;
+}) {
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        {rows.map((row) => (
+          <div key={row.value} className="space-y-2">
+            <Skeleton className="h-3.5 w-24" />
+            <Skeleton className="h-2 w-full" />
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <ul className="space-y-4">
+      {rows.map((row) => {
+        const share = total === 0 ? 0 : Math.round((row.count / total) * 100);
+        return (
+          <li key={row.value} title={`${row.label}: ${row.count} tasks (${share}%), ${row.done} completed`}>
+            <div className="flex items-center justify-between gap-2 text-sm">
+              <span className="flex min-w-0 items-center gap-2 font-medium text-slate-700 dark:text-slate-300">
+                {row.marker && <span className={`h-2 w-2 shrink-0 rounded-full ${row.marker}`} />}
+                <span className="truncate">{row.label}</span>
+              </span>
+              <span className="shrink-0 text-slate-500 tabular-nums dark:text-slate-400">
+                <span className="font-semibold text-slate-900 dark:text-white">{row.count}</span>
+                {row.count > 0 && <span className="text-xs"> · {row.done} done</span>}
+              </span>
+            </div>
+            <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+              <div
+                className={`h-full rounded-full transition-all duration-700 ${row.bar}`}
+                style={{ width: `${share}%` }}
+              />
+            </div>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+function ListSkeleton() {
+  return (
+    <div className="space-y-4">
+      {Array.from({ length: 3 }).map((_, i) => (
+        <div key={i} className="flex gap-3">
+          <Skeleton className="h-8 w-8 rounded-lg" />
+          <div className="flex-1 space-y-2">
+            <Skeleton className="h-4 w-2/3" />
+            <Skeleton className="h-3 w-1/3" />
+          </div>
+        </div>
+      ))}
     </div>
-  </main>
-);
+  );
+}
+
+function GoToTasks({ label }: { label: string }) {
+  return (
+    <Link
+      href="/"
+      className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
+    >
+      <PlusIcon className="h-4 w-4" />
+      {label}
+    </Link>
+  );
 }
